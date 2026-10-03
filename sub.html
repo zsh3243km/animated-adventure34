@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lumen</title>
+<meta name="description" content="Lumen subscription">
+<style>
+/* Lumen subscription page. Material 3 Expressive tokens, self-contained: no
+   external font, icon, or script request, so the page works offline and on a
+   slow phone. Light and dark follow the OS preference. */
+:root {
+  color-scheme: light dark;
+  --md-sys-color-primary: #52639a;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #dee1ff;
+  --md-sys-color-on-primary-container: #0c1b4b;
+  --md-sys-color-tertiary: #865228;
+  --md-sys-color-tertiary-container: #ffdcc8;
+  --md-sys-color-on-tertiary-container: #311300;
+  --md-sys-color-surface: #faf8ff;
+  --md-sys-color-surface-container-low: #f4f2fa;
+  --md-sys-color-surface-container: #eeecf4;
+  --md-sys-color-surface-container-high: #e7e5ee;
+  --md-sys-color-on-surface: #1a1b20;
+  --md-sys-color-on-surface-variant: #45464f;
+  --md-sys-color-outline: #757680;
+  --md-sys-color-outline-variant: #c6c5d0;
+  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-success: #176b4f;
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-medium: 12px;
+  --md-sys-shape-corner-large: 16px;
+  --md-sys-shape-corner-extra-large: 28px;
+  --md-sys-shape-corner-full: 9999px;
+  --md-sys-motion-easing-emphasized: cubic-bezier(.2,0,0,1);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --md-sys-color-primary: #bdc7ff;
+    --md-sys-color-on-primary: #22305f;
+    --md-sys-color-primary-container: #394777;
+    --md-sys-color-on-primary-container: #dee1ff;
+    --md-sys-color-tertiary: #f2b99a;
+    --md-sys-color-tertiary-container: #6d3b22;
+    --md-sys-color-on-tertiary-container: #ffdcc8;
+    --md-sys-color-surface: #111318;
+    --md-sys-color-surface-container-low: #191b21;
+    --md-sys-color-surface-container: #1d1f25;
+    --md-sys-color-surface-container-high: #27292f;
+    --md-sys-color-on-surface: #e3e2e9;
+    --md-sys-color-on-surface-variant: #c6c5d0;
+    --md-sys-color-outline: #90909b;
+    --md-sys-color-outline-variant: #46464f;
+    --md-sys-color-error: #ffb4ab;
+    --md-sys-color-success: #8fd6b8;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  display: grid;
+  place-items: start center;
+  padding: 20px 16px 48px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.shell { width: min(760px, 100%); display: flex; flex-direction: column; gap: 16px; }
+
+/* ---- pass card ---- */
+.pass {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  padding: 28px;
+  background:
+    radial-gradient(120% 90% at 88% 4%,
+      color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent), transparent 62%),
+    linear-gradient(150deg,
+      var(--md-sys-color-primary-container),
+      var(--md-sys-color-surface-container-high));
+  color: var(--md-sys-color-on-primary-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 26%, transparent);
+  box-shadow: 0 18px 48px color-mix(in srgb, var(--md-sys-color-primary) 14%, transparent);
+}
+.pass::after {
+  /* One slow sheen. Respects prefers-reduced-motion below. */
+  content: '';
+  position: absolute;
+  inset: -40% -10%;
+  background: linear-gradient(74deg, transparent 42%, rgba(255,255,255,.16) 50%, transparent 58%);
+  transform: translateX(-120%);
+  animation: sheen 7s var(--md-sys-motion-easing-emphasized) infinite;
+}
+@keyframes sheen { 0%, 62% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+.pass-top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.mark {
+  width: 44px; height: 44px; border-radius: 14px; flex: none;
+  background: var(--md-sys-color-primary);
+  box-shadow: inset 0 0 0 9px color-mix(in srgb, var(--md-sys-color-on-primary) 34%, transparent);
+}
+.pass-brand { font-weight: 780; letter-spacing: .14em; font-size: .82rem; text-transform: uppercase; }
+.pass-name { font-size: 1.7rem; font-weight: 780; letter-spacing: -.03em; margin: 0 0 4px; }
+.pass-meta { font-size: .86rem; opacity: .82; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border-radius: var(--md-sys-shape-corner-full);
+  font-size: .74rem; font-weight: 700; letter-spacing: .02em;
+  background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 12%, transparent);
+}
+.chip.ok { background: color-mix(in srgb, var(--md-sys-color-success) 20%, transparent); }
+.chip.bad { background: color-mix(in srgb, var(--md-sys-color-error) 20%, transparent); }
+
+/* ---- usage ring ---- */
+.ring-row { display: flex; align-items: center; gap: 20px; margin-top: 22px; }
+.ring { width: 104px; height: 104px; flex: none; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 10; stroke-linecap: round; }
+.ring .track { stroke: color-mix(in srgb, var(--md-sys-color-on-primary-container) 14%, transparent); }
+.ring .fill { stroke: var(--md-sys-color-primary); transition: stroke-dashoffset 900ms var(--md-sys-motion-easing-emphasized); }
+.ring-label { position: relative; margin-top: -74px; text-align: center; font-size: .96rem; font-weight: 780; pointer-events: none; }
+.ring-text { flex: 1; min-width: 0; }
+.ring-text b { display: block; font-size: 1.05rem; }
+.ring-text span { font-size: .82rem; opacity: .82; }
+
+/* ---- usage numbers ---- */
+.numbers { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.number {
+  flex: 1 1 120px; padding: 10px 12px; border-radius: var(--md-sys-shape-corner-medium);
+  background: color-mix(in srgb, var(--md-sys-color-on-primary-container) 9%, transparent);
+}
+.number small { display: block; font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; opacity: .78; }
+.number b { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+
+/* ---- actions ---- */
+.btn {
+  min-height: 50px; padding: 0 22px; border: 0; cursor: pointer; width: 100%;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
+  font: 600 .92rem inherit; display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  transition: transform 180ms var(--md-sys-motion-easing-emphasized);
+}
+.btn:active { transform: scale(.97); }
+.btn.tonal { background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); }
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ---- apps ---- */
+.apps { display: grid; grid-template-columns: repeat(auto-fill, minmax(122px, 1fr)); gap: 10px; }
+.app {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 10px;
+  border-radius: var(--md-sys-shape-corner-large); text-decoration: none;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface); font-size: .8rem; font-weight: 620; text-align: center;
+  transition: transform 180ms var(--md-sys-motion-easing-emphasized), background 180ms;
+}
+.app:hover { background: var(--md-sys-color-surface-container-high); }
+.app:active { transform: scale(.96); }
+.app svg { width: 26px; height: 26px; }
+
+/* ---- configs ---- */
+.configs { border-radius: var(--md-sys-shape-corner-extra-large); overflow: hidden; border: 1px solid var(--md-sys-color-outline-variant); background: var(--md-sys-color-surface-container-low); }
+.config-row {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+.config-row:last-child { border-bottom: 0; }
+.config-main { flex: 1; min-width: 0; }
+.config-name { font-weight: 650; font-size: .92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.config-tag { font-size: .74rem; color: var(--md-sys-color-on-surface-variant); margin-top: 2px; }
+.config-qr { flex: none; width: 92px; height: 92px; background: #fff; border-radius: var(--md-sys-shape-corner-small); padding: 4px; }
+.config-qr img { width: 100%; height: 100%; display: block; }
+.icon-btn {
+  flex: none; width: 42px; height: 42px; border-radius: var(--md-sys-shape-corner-full);
+  border: 1px solid var(--md-sys-color-outline-variant); background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface); cursor: pointer; display: grid; place-items: center;
+}
+.icon-btn:active { transform: scale(.94); }
+
+.section-title { font-size: .74rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); margin: 6px 0 10px; }
+.note { padding: 14px 16px; border-radius: var(--md-sys-shape-corner-medium); background: var(--md-sys-color-surface-container); border: 1px solid var(--md-sys-color-outline-variant); font-size: .8rem; color: var(--md-sys-color-on-surface-variant); }
+.warn { background: color-mix(in srgb, var(--md-sys-color-error) 12%, var(--md-sys-color-surface-container)); border-color: color-mix(in srgb, var(--md-sys-color-error) 34%, transparent); color: var(--md-sys-color-on-surface); }
+
+@media (max-width: 520px) {
+  .ring-row { flex-direction: column; align-items: flex-start; }
+  .btn-row { grid-template-columns: 1fr; }
+  .config-row { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+<main class="shell">
+  <!-- Everything below is filled in by the panel's subscription template
+       variables. Unknown tokens are stripped by the panel before delivery. -->
+  <section class="pass">
+    <div class="pass-top">
+      <span class="mark" aria-hidden="true"></span>
+      <span class="pass-brand">Lumen</span>
+      <span class="chip ok" data-kt="status-ok">Active</span>
+    </div>
+    <h1 class="pass-name" data-kt="username">Subscriber</h1>
+    <div class="pass-meta">
+      <span data-kt="usage">—</span>
+      <span data-kt="expire">—</span>
+      <span data-kt="remaining">—</span>
+    </div>
+    <div class="ring-row">
+      <div style="position:relative">
+        <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="track" cx="60" cy="60" r="52"></circle>
+          <circle class="fill" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"></circle>
+        </svg>
+        <div class="ring-label" data-kt="percent">0%</div>
+      </div>
+      <div class="ring-text">
+        <b data-kt="used">—</b>
+        <span data-kt="total">—</span>
+      </div>
+    </div>
+    <div class="numbers">
+      <div class="number"><small data-kt="label-used">Used</small><b data-kt="used-2">—</b></div>
+      <div class="number"><small data-kt="label-left">Left</small><b data-kt="left">—</b></div>
+      <div class="number"><small data-kt="label-days">Days left</small><b data-kt="days">—</b></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title" data-kt="title-links">Your links</div>
+    <button class="btn" id="copy-sub" data-kt="copy-sub">Copy subscription link</button>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn tonal" id="copy-all" data-kt="copy-all">Copy all configs</button>
+      <button class="btn tonal" id="refresh" data-kt="refresh">Refresh</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title" data-kt="title-apps">Add with one tap</div>
+    <div class="apps">
+      <a class="app" data-kb="v2box" href="#" rel="nofollow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"></rect><path d="M8 12h8"></path></svg>
+        <span>V2Box</span>
+      </a>
+      <a class="app" data-kb="v2rayng" href="#" rel="nofollow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16l4-8 4 8 4-8 4 8"></path></svg>
+        <span>v2rayNG</span>
+      </a>
+      <a class="app" data-kb="hiddify" href="#" rel="nofollow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        <span>Hiddify</span>
+      </a>
+      <a class="app" data-kb="streisand" href="#" rel="nofollow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"></path><path d="M5 7l7-5 7 5"></path><path d="M5 17l7 5 7-5"></path></svg>
+        <span>Streisand</span>
+      </a>
+      <a class="app" data-kb="happ" href="#" rel="nofollow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><path d="M9 9h.01M15 9h.01"></path></svg>
+        <span>Happ</span>
+      </a>
+      <a class="app" data-kb="nekobox" href="#" rel="nofollow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+        <span>NekoBox</span>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title" data-kt="title-configs">Configs</div>
+    <div class="configs" id="configs"></div>
+  </section>
+
+  <p class="note" id="note" data-kt="note">Import the subscription link into your app, then pick any config and connect.</p>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  /* The panel substitutes {{ }} tokens in this file before serving it. Values
+     that did not resolve are removed, so a missing field simply leaves its
+     placeholder text rather than rendering a literal {{token}}. */
+  var T = {
+    "status-ok": ["Active", "فعال"],
+    "title-links": ["Your links", "لینک‌های شما"],
+    "title-apps": ["Add with one tap", "افزودن با یک لمس"],
+    "title-configs": ["Configs", "کانفیگ‌ها"],
+    "copy-sub": ["Copy subscription link", "کپی لینک اشتراک"],
+    "copy-all": ["Copy all configs", "کپی همه کانفیگ‌ها"],
+    "refresh": ["Refresh", "به‌روزرسانی"],
+    "label-used": ["Used", "مصرف‌شده"],
+    "label-left": ["Left", "باقی‌مانده"],
+    "label-days": ["Days left", "روز باقی‌مانده"],
+    "note": [
+      "Import the subscription link into your app, then pick any config and connect.",
+      "لینک اشتراک را در برنامه‌ات وارد کن، بعد یکی از کانفیگ‌ها را انتخاب و متصل شو."
+    ],
+    "copied": ["Copied", "کپی شد"],
+    "expired": ["Expired", "منقضی شده"],
+    "unlimited": ["Unlimited", "نامحدود"],
+    "days": ["days", "روز"]
+  };
+
+  function lang() {
+    var c = "";
+    try { c = localStorage.getItem("i18nextLng") || localStorage.getItem("lang") || ""; } catch (e) {}
+    c = String(c || document.documentElement.lang || "").toLowerCase();
+    return /^fa|^per/.test(c) ? "fa" : "en";
+  }
+
+  function t(key) {
+    var pair = T[key];
+    if (!pair) return key;
+    return pair[lang() === "fa" ? 1 : 0];
+  }
+
+  document.querySelectorAll("[data-kt]").forEach(function (node) {
+    node.textContent = t(node.getAttribute("data-kt"));
+  });
+
+  function bytes(n) {
+    n = Number(n) || 0;
+    if (n <= 0) return "0 B";
+    var units = ["B", "KB", "MB", "GB", "TB"], i = 0;
+    while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+    return (i === 0 ? n : n.toFixed(n < 10 ? 2 : 1)) + " " + units[i];
+  }
+
+  function copy(text, button) {
+    if (!text) return;
+    var done = function () {
+      var original = button.textContent;
+      button.textContent = t("copied");
+      setTimeout(function () { button.textContent = original; }, 1600);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+    } else {
+      fallback(text, done);
+    }
+  }
+
+  function fallback(text, done) {
+    var area = document.createElement("textarea");
+    area.value = text;
+    area.style.cssText = "position:fixed;opacity:0";
+    document.body.appendChild(area);
+    area.select();
+    try { document.execCommand("copy"); done(); } catch (e) {}
+    area.remove();
+  }
+
+  document.getElementById("copy-sub").onclick = function () {
+    copy(document.body.dataset.subUrl || "", this);
+  };
+  document.getElementById("copy-all").onclick = function () {
+    var links = Array.prototype.map.call(
+      document.querySelectorAll("#configs [data-link]"),
+      function (n) { return n.getAttribute("data-link"); }
+    ).filter(Boolean);
+    copy(links.join("\n"), this);
+  };
+  document.getElementById("refresh").onclick = function () { location.reload(); };
+
+  /* One-tap import links. Each app registers its own scheme; an unknown scheme
+     simply leaves the link inert rather than navigating away. */
+  var SCHEMES = {
+    v2box: "v2box://add-sub://",
+    v2rayng: "v2rayng://add-sub://",
+    hiddify: "hiddify://add-sub://",
+    streisand: "streisand://add-sub://",
+    happ: "happ://add-sub://",
+    nekobox: "nekobox://import-sub://"
+  };
+  var subUrl = document.body.dataset.subUrl || "";
+  document.querySelectorAll("[data-kb]").forEach(function (node) {
+    var scheme = SCHEMES[node.getAttribute("data-kb")];
+    if (!scheme || !subUrl) { node.removeAttribute("href"); return; }
+    node.href = scheme + encodeURIComponent(subUrl);
+    node.addEventListener("click", function (e) {
+      e.preventDefault();
+      location.href = scheme + encodeURIComponent(subUrl);
+    });
+  });
+
+  /* Usage ring */
+  var ring = document.querySelector(".ring .fill");
+  if (ring) {
+    var percent = Math.max(0, Math.min(100, Number(document.body.dataset.usagePercent) || 0));
+    var circumference = 2 * Math.PI * 52;
+    ring.setAttribute("stroke-dasharray", circumference.toFixed(1));
+    ring.setAttribute("stroke-dashoffset", (circumference * (1 - percent / 100)).toFixed(1));
+  }
+})();
+</script>
+</body>
+</html>
