@@ -349,15 +349,23 @@
     root.appendChild(renderAssignment());
   }
 
-  /* Per-config country assignment. The panel stores configs as users, so the
-     assignment targets a username and the panel's doctor turns it into a
-     routing rule. */
+  /* Per-config country preference.
+
+     The panel attaches a user to an inbound through its group, so a country is
+     stored here as an intent and applied to the core config as a routing rule.
+     It is a preference, not a guarantee: a country with no healthy proxy falls
+     back to the direct route, and the card says so. */
   function renderAssignment() {
     var section = el("section", "");
     section.style.marginTop = "26px";
-    section.appendChild(el("h2", "lm-title", "Route a config"));
+    section.appendChild(el("h2", "lm-title", "Preferred country per config"));
     section.appendChild(
-      el("p", "lm-sub", "Pick a country per config. The panel applies it within a few minutes.")
+      el(
+        "p",
+        "lm-sub",
+        "Choose the exit country a config prefers. Its traffic leaves through that country's " +
+        "fastest healthy proxy; if none is available the config uses the direct route."
+      )
     );
 
     if (!STATE.users.length) {
@@ -365,26 +373,21 @@
       return section;
     }
 
-    var countries = byCountry().filter(function (c) {
-      return c.best;
+    var healthy = {};
+    byCountry().forEach(function (entry) {
+      if (entry.best) healthy[entry.code || entry.key] = entry;
     });
-    if (!countries.length) {
-      section.appendChild(
-        el("p", "lm-sub", "No country has a healthy proxy yet, so nothing can be routed.")
-      );
-      return section;
-    }
 
     var grid = el("div", "lm-grid");
     grid.style.marginTop = "14px";
     STATE.users.forEach(function (user) {
-      grid.appendChild(assignmentCard(user, countries));
+      grid.appendChild(assignmentCard(user, healthy));
     });
     section.appendChild(grid);
     return section;
   }
 
-  function assignmentCard(user, countries) {
+  function assignmentCard(user, healthy) {
     var card = el("div", "lm-card");
     var top = el("div", "lm-card-top");
     top.appendChild(el("span", "lm-country", user.username));
@@ -397,17 +400,26 @@
       "min-height:44px;border-radius:12px;border:1px solid {{border|0.85}} 0;" +
         "background:{{background|0.98}} 0;color:{{foreground|0.9}} 0;padding:0 12px;font:inherit;width:100%"
     );
-    var direct = el("option", "", "Direct (no proxy)");
+    var direct = el("option", "", "Direct (server IP)");
     direct.value = "";
     select.appendChild(direct);
-    countries.forEach(function (entry) {
+    Object.keys(healthy).sort().forEach(function (code) {
+      var entry = healthy[code];
       var option = el("option", "", entry.flag + "  " + entry.country);
-      option.value = entry.code || entry.key;
-      if (option.value === current) option.selected = true;
+      option.value = code;
+      if (code === current) option.selected = true;
       select.appendChild(option);
     });
+    // A saved country whose proxy is gone stays visible so the operator can see
+    // why the config is not actually routed.
+    if (current && !healthy[current]) {
+      var stale = el("option", "", "⚠ " + current + " (no healthy proxy)");
+      stale.value = current;
+      stale.selected = true;
+      select.appendChild(stale);
+    }
 
-    var apply = el("button", "lm-btn lm-btn-primary", "Apply");
+    var apply = el("button", "lm-btn lm-btn-primary", "Save");
     apply.onclick = function () {
       assign(user.username, select.value, apply);
     };
@@ -416,11 +428,17 @@
     foot.appendChild(apply);
     card.appendChild(foot);
 
-    if (current) {
-      var badge = el("div", "lm-meter");
-      badge.appendChild(el("span", null, "Routed via " + current));
-      card.appendChild(badge);
+    var note = el("div", "lm-meter");
+    var span = el("span", null, "");
+    if (current && healthy[current]) {
+      span.textContent = "via " + healthy[current].flag + " " + healthy[current].country;
+    } else if (current) {
+      span.textContent = "direct — no healthy proxy for " + current;
+    } else {
+      span.textContent = "direct (server IP)";
     }
+    note.appendChild(span);
+    card.appendChild(note);
     return card;
   }
 

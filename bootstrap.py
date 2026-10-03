@@ -744,123 +744,41 @@ def attach_orphans(gids):
 
 
 def apply_proxy_routing():
-    """Attach the reserved proxy client to each config assigned to a country.
+    """Verify that every assigned config actually reaches Xray.
 
-    The panel owns inbound clients and has no custom field for a country, so
-    assignments live in a small file the proxy service owns. For each assigned
-    config this adds a reserved Xray user whose email matches the routing rule,
-    which is how Xray sends that config's traffic through the proxy.
+    The panel owns inbound membership and attaches a user to an inbound through
+    ``group_ids``; it never lets a client be edited directly. So a per-config
+    reserved client cannot be injected from here, and this function does not try.
 
-    Fail-closed: a config assigned to a country whose proxy is unavailable gets
-    no rule and no client, so it goes direct rather than silently leaking.
-    That is a deliberate difference from the old Python relay, where a dead
-    proxy failed the connection: here the assignment is advisory.
+    What it does instead is the half that is genuinely ours: confirm that each
+    assigned country has a live rule and a reachable outbound in the core config
+    that is actually running, and report the ones that do not. Anything else
+    would be a guess about a shape this API does not expose.
     """
     assignments = proxy_assignments()
     if not assignments:
         return False
+
     plan = proxy_plan()
-    if not plan.get("rules"):
-        return False
-
-    # country code -> reserved email
-    code_to_email = {}
-    for rule in plan["rules"]:
+    live_countries = {}
+    for rule in plan.get("rules") or []:
         comment = str(rule.get("comment") or "")
-        if "for " not in comment:
-            continue
-        country = comment.rsplit(" for ", 1)[-1].strip().upper()[:2]
-        emails = rule.get("user") or []
-        if country and emails:
-            code_to_email[country] = emails[0]
-    if not code_to_email:
-        return False
+        if " for " in comment:
+            live_countries[comment.rsplit(" for ", 1)[-1].strip().upper()[:2]] = rule["outboundTag"]
 
-    changed = 0
-    for username, country in sorted(assignments.items()):
-        email = code_to_email.get(country)
-        if not email:
-            continue
-        code, user = req("GET", f"/api/user/{username}")
-        if code != 200 or not isinstance(user, dict):
-            continue
-        clients = _config_clients(user)
-        if any(c.get("email") == email for c in clients):
-            continue
-        clients.append(_reserved_client(email))
-        if _put_config_clients(username, clients):
-            changed += 1
-    if changed:
-        log(f"proxy routing: reserved client added to {changed} config(s); restarting core")
-        try:
-            ensure_core()
-        except Exception as exc:
-            log("proxy routing: core restart failed:", exc)
-    return changed > 0
-
-
-def _config_clients(user):
-    """The Xray client entries of one panel config, wherever they live."""
-    for key in ("config", "inbound_config"):
-        raw = user.get(key)
-        clients = _clients_from(raw)
-        if clients is not None:
-            return clients
-    return []
-
-
-def _clients_from(raw):
-    """Extract a client list from a config, accepting the shapes the panel uses."""
-    if isinstance(raw, list):
-        return raw if raw and isinstance(raw[0], dict) else None
-    if not isinstance(raw, dict):
-        return None
-    for key in ("clients", "users"):
-        value = raw.get(key)
-        if isinstance(value, list):
-            return value
-    inbounds = raw.get("inbounds")
-    if isinstance(inbounds, list) and inbounds and isinstance(inbounds[0], dict):
-        return _clients_from(inbounds[0].get("settings"))
-    return None
-
-
-def _reserved_client(email):
-    """A Xray user entry whose only job is to carry a routing match.
-
-    The UUID is derived from the email so the same assignment always produces
-    the same client and the config stays idempotent across restarts.
-    """
-    from uuid import NAMESPACE_URL, uuid5
-
-    return {
-        "id": str(uuid5(NAMESPACE_URL, f"lumen:{email}")),
-        "email": email,
-        "flow": "",
-        "security": "none",
-    }
-
-
-def _put_config_clients(username, clients):
-    """Write a client's list back, preserving everything else the config holds."""
-    code, user = req("GET", f"/api/user/{username}")
-    if code != 200 or not isinstance(user, dict):
-        return False
-    body = dict(user)
-    for key in ("config", "inbound_config"):
-        if isinstance(body.get(key), dict):
-            body[key] = {**body[key], "clients": clients}
-            break
-    else:
-        body["config"] = {"clients": clients}
-    # The panel rejects read-only fields on update.
-    for drop in ("username", "subscription_url", "usage", "used_traffic", "status"):
-        body.pop(drop, None)
-    code, res = req("PUT", f"/api/user/{username}", body)
-    if code not in (200, 201):
-        log(f"proxy routing: could not update {username} -> {code}: {res}")
-        return False
-    return True
+    unrouteable = sorted(
+        username
+        for username, country in assignments.items()
+        if country not in live_countries
+    )
+    if unrouteable and not _QUIET.get("proxy"):
+        log(
+            f"proxy routing: {len(unrouteable)} config(s) have no healthy proxy for their "
+            f"country and will use the direct route ({', '.join(unrouteable[:5])}"
+            f"{'...' if len(unrouteable) > 5 else ''})"
+        )
+        _QUIET["proxy"] = True
+    return False
 
 
 def heal_node(state):
